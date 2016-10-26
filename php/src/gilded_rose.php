@@ -28,26 +28,30 @@ class GildedRose {
     function calc_quality_delta(Item $item) {
         $delta = 0;
 
+        // Initial delta
         switch ($item->name) {
             case 'Sulfuras, Hand of Ragnaros';
                 return 0;
 
             case 'Aged Brie';
                 $delta = 1;
-                
-                if ($item->sell_in < 0) {
-                    $delta *= 2;
-                }
                 break;
 
             case 'Conjured Mana Cake';
                 $delta = -2;
-                
-                if ($item->sell_in < 0) {
-                    $delta *= 2;
-                }
                 break;
 
+            case 'Backstage passes to a TAFKAL80ETC concert';
+                $delta = 1;
+                break;
+
+            default:
+                $delta = -1;
+                break;
+        }
+        
+        // Increase delta by sell_in
+        switch ($item->name) {
             case 'Backstage passes to a TAFKAL80ETC concert';
                 if ($item->sell_in < 0) {
                     $delta = - $item->quality;
@@ -55,14 +59,10 @@ class GildedRose {
                     $delta = 3;
                 } elseif ($item->sell_in < 10) {
                     $delta = 2;
-                } else {
-                    $delta = 1;
                 }
                 break;
-
-            default:
-                $delta = -1;
                 
+            default:
                 if ($item->sell_in < 0) {
                     $delta *= 2;
                 }
