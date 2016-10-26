@@ -10,69 +10,74 @@ class GildedRose {
 
     function update_quality() {
         foreach ($this->items as $item) {
-            if ($item->name != 'Aged Brie' and $item->name != 'Backstage passes to a TAFKAL80ETC concert') {
-                if ($item->quality > 0) {
-                    if ($item->name == 'Conjured Mana Cake') {
-                        if ($item->quality > 1) {
-                            $item->quality = $item->quality - 2;
-                        } else {
-                            $item->quality = $item->quality - 1;
-                        }
-                    } else {
-                        if ($item->name != 'Sulfuras, Hand of Ragnaros') {
-                            $item->quality = $item->quality - 1;
-                        }
-                    }
-                }
-            } else {
-                if ($item->quality < 50) {
-                    $item->quality = $item->quality + 1;
-                    if ($item->name == 'Backstage passes to a TAFKAL80ETC concert') {
-                        if ($item->sell_in < 11) {
-                            if ($item->quality < 50) {
-                                $item->quality = $item->quality + 1;
-                            }
-                        }
-                        if ($item->sell_in < 6) {
-                            if ($item->quality < 50) {
-                                $item->quality = $item->quality + 1;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if ($item->name != 'Sulfuras, Hand of Ragnaros') {
-                $item->sell_in = $item->sell_in - 1;
-            }
-            
-            if ($item->sell_in < 0) {
-                if ($item->name != 'Aged Brie') {
-                    if ($item->name != 'Backstage passes to a TAFKAL80ETC concert') {
-                        if ($item->quality > 0) {
-                            if ($item->name == 'Conjured Mana Cake') {
-                                if ($item->quality > 1) {
-                                    $item->quality = $item->quality - 2;
-                                } else {
-                                    $item->quality = $item->quality - 1;
-                                }
-                            } else {
-                                if ($item->name != 'Sulfuras, Hand of Ragnaros') {
-                                    $item->quality = $item->quality - 1;
-                                }
-                            }
-                        }
-                    } else {
-                        $item->quality = $item->quality - $item->quality;
-                    }
-                } else {
-                    if ($item->quality < 50) {
-                        $item->quality = $item->quality + 1;
-                    }
-                }
-            }
+            $item->sell_in += $this->calc_sell_in_delta($item);
+            $item->quality += $this->calc_quality_delta($item);
         }
     }
+    
+    function calc_sell_in_delta(Item $item) {
+        switch ($item->name) {
+            case 'Sulfuras, Hand of Ragnaros';
+                return 0;
+
+            default:
+                return -1;
+        }
+    }
+
+    function calc_quality_delta(Item $item) {
+        $delta = 0;
+
+        switch ($item->name) {
+            case 'Sulfuras, Hand of Ragnaros';
+                return 0;
+
+            case 'Aged Brie';
+                $delta = 1;
+                
+                if ($item->sell_in < 0) {
+                    $delta *= 2;
+                }
+                break;
+
+            case 'Conjured Mana Cake';
+                $delta = -2;
+                
+                if ($item->sell_in < 0) {
+                    $delta *= 2;
+                }
+                break;
+
+            case 'Backstage passes to a TAFKAL80ETC concert';
+                if ($item->sell_in < 0) {
+                    $delta = - $item->quality;
+                } elseif ($item->sell_in < 5) {
+                    $delta = 3;
+                } elseif ($item->sell_in < 10) {
+                    $delta = 2;
+                } else {
+                    $delta = 1;
+                }
+                break;
+
+            default:
+                $delta = -1;
+                
+                if ($item->sell_in < 0) {
+                    $delta *= 2;
+                }
+                break;
+        }
+        
+        // Maximum is 50
+        $delta = min($delta, 50 - $item->quality);
+        
+        // Minimum is 0
+        $delta = max($delta, 0 - $item->quality);
+        
+        return $delta;
+    }
+
 }
 
 class Item {
